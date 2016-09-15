@@ -24,7 +24,7 @@ int calcHash(const char *s, int max , uint32_t seed)  {
 //' @param hashSeed integer, seed for the employed hash function (MurmurHash3)
 //' @export
 // [[Rcpp::export]]
-DataFrame hashDataFrame(DataFrame df, int numCols,int hashSeed) {
+DataFrame hashDataFrame(DataFrame df, int numCols, int hashSeed) {
     // Create empty numCols dataFrame and fill it with zeros
 
     int nrows=df.nrows();
