@@ -25,6 +25,42 @@ inline bool isNotIntNA(int x) {
   return x!=NA_INTEGER;
 }
 
+void processNumericVector(const char *colName, int numCols, int hashSeed, const NumericVector &x, List &resList) {
+  int h=calcHash(colName, numCols, hashSeed);
+  int targetCol=abs(h);
+  double sign=h<0 ? -1.0 : 1.0;
+
+  for(int i=0; i<x.length(); i++) {
+    if (isNotDoubleNA(x[i])) {
+      as<NumericVector>(resList[targetCol-1])[i]+=sign*x[i];
+    }
+  }
+}
+
+void processIntegerVector(const char *colName, int numCols, int hashSeed, const IntegerVector &x, List &resList) {
+  int h=calcHash(colName, numCols, hashSeed);
+  int targetCol=abs(h);
+  double sign=h<0 ? -1.0 : 1.0;
+
+  for(int i=0; i<x.length(); i++) {
+    if (isNotIntNA(x[i])) {
+      as<NumericVector>(resList[targetCol-1])[i]+=sign*x[i];
+    }
+  }
+}
+
+bool isFactor(const IntegerVector &x) {
+  bool res=false;
+  if (x.hasAttribute("class")) {
+    string className=as<string>(x.attr("class"));
+    res=(className=="factor");
+  }
+  return res;
+}
+
+void processFactorVector(const char *colName, int numCols, int hashSeed, const IntegerVector &x, List &resList) {
+}
+
 //' Hashes the data frame \code{df}, so the output contains \code{numCols}
 //'
 //' @param df data frame to be hashed
@@ -32,6 +68,7 @@ inline bool isNotIntNA(int x) {
 //' @param hashSeed integer, seed for the employed hash function (MurmurHash3)
 //' @export
 // [[Rcpp::export]]
+
 DataFrame hashDataFrame(DataFrame df, int numCols, int hashSeed) {
     // Create empty numCols dataFrame and fill it with zeros
 
@@ -51,29 +88,20 @@ DataFrame hashDataFrame(DataFrame df, int numCols, int hashSeed) {
     // Loop over columns, add substract each column depending on hash
 
     CharacterVector cnames=df.attr("names");
-    for(CharacterVector::iterator iter=cnames.begin(); iter!=cnames.end(); iter++) {
-        int type=0;
-        int h=calcHash(*iter, numCols, hashSeed);
-        int targetCol=abs(h);
-        double sign=h<0 ? -1.0 : 1.0;
-        string s=as<string>(*iter);
+    for(CharacterVector::iterator colNameIter=cnames.begin(); colNameIter!=cnames.end(); colNameIter++) {
+        string colName=as<string>(*colNameIter);
 
-      if (TYPEOF(df[s])==REALSXP) {
-            NumericVector x=df[s];
-        for(int i=0; i<nrows; i++) {
-          if (isNotDoubleNA(x[i])) {
-            as<NumericVector>(resList[targetCol-1])[i]+=sign*x[i];
-            }
+        if (TYPEOF(df[colName])==REALSXP) {
+              processNumericVector(*colNameIter,numCols,hashSeed,df[colName],resList);
         }
+        else if (TYPEOF(df[colName])==INTSXP) {
+          IntegerVector x=df[colName];
+          if (isFactor(x)) {
+            processFactorVector(*colNameIter,numCols,hashSeed,x,resList);
+          } else {
+            processIntegerVector(*colNameIter,numCols,hashSeed,x,resList);
+          }
       }
-      else if (TYPEOF(df[s])==INTSXP) {
-        IntegerVector x=df[s];
-        for(int i=0; i<nrows; i++) {
-          if (isNotIntNA(x[i])) {
-             as<NumericVector>(resList[targetCol-1])[i]+=sign*x[i];
-            }
-        }
-    }
     }
 
   DataFrame result(resList);
