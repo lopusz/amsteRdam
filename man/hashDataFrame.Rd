@@ -2,18 +2,23 @@
 % Please edit documentation in R/RcppExports.R
 \name{hashDataFrame}
 \alias{hashDataFrame}
-\title{Hashes the data frame \code{df}, so the output contains \code{numCols}}
+\title{Hashes the data frame, so the output contains much smaller number of columns.}
 \usage{
 hashDataFrame(df, numCols, hashSeed)
 }
 \arguments{
-\item{df}{data frame to be hashed}
+\item{df}{Data frame to be hashed.}
 
-\item{numCols}{integer, number of columns for the output data frame}
+\item{numCols}{Integer, number of columns for the output data frame.}
 
-\item{hashSeed}{integer, seed for the employed hash function (MurmurHash3)}
+\item{hashSeed}{Integer, seed for the employed hash function (MurmurHash3).}
+}
+\value{
+Data frame having \code{numCols} columns, containing combination of
+columns from \code{df} according to hashing function.
 }
 \description{
-Hashes the data frame \code{df}, so the output contains \code{numCols}
+Calculates the reduced representation of the given data frame based on the
+hashing trick.
 }
 

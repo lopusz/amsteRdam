@@ -90,11 +90,17 @@ void processFactorVector(const char *colName, int numCols, int hashSeed, const I
   }
 }
 
-//' Hashes the data frame \code{df}, so the output contains \code{numCols}
+//' Hashes the data frame, so the output contains much smaller number of columns.
 //'
-//' @param df data frame to be hashed
-//' @param numCols integer, number of columns for the output data frame
-//' @param hashSeed integer, seed for the employed hash function (MurmurHash3)
+//' Calculates the reduced representation of the given data frame based on the
+//' hashing trick.
+//'
+//' @param df Data frame to be hashed.
+//' @param numCols Integer, number of columns for the output data frame.
+//' @param hashSeed Integer, seed for the employed hash function (MurmurHash3).
+//'
+//' @return Data frame having \code{numCols} columns, containing combination of
+//' columns from \code{df} according to hashing function.
 //' @export
 // [[Rcpp::export]]
 
@@ -149,8 +155,6 @@ void updateCountsForFactorVector
   (const char *colName, int numCols, int hashSeed, const IntegerVector &x, vector<int> &bucketCount) {
   CharacterVector levels=as<CharacterVector>(x.attr("levels"));
 
-  vector<int> levelToColumn(levels.length()+1);  // levels are numbered from 1
-
   for(int i=0; i<levels.length(); i++) {
     string totalName=string(colName)+":"+string(levels[i]);
     int h=calcHash(totalName.c_str(), numCols, hashSeed);
@@ -171,11 +175,35 @@ void updateExplanationForIntegerOrNumericVector
   bucketIndex[ind]++;
 }
 
-//' Hashes the data frame \code{df}, so the output contains \code{numCols}
+void updateExplanationForFactorVector
+  (const char *colName, int numCols, int hashSeed, IntegerVector &x, List &resList, vector<int> &bucketIndex) {
+  CharacterVector levels=as<CharacterVector>(x.attr("levels"));
+
+  for(int i=0; i<levels.length(); i++) {
+    string totalName=string(colName)+":"+string(levels[i]);
+    int h=calcHash(totalName.c_str(), numCols, hashSeed);
+    int targetCol=abs(h);
+    int sign=h<0 ? -1.0 : 1.0;
+    int ind=targetCol-1;
+    as<IntegerVector>(resList[ind])[bucketIndex[ind]]=sign;
+    CharacterVector n=as<IntegerVector>(resList[ind]).attr("names");
+    as<CharacterVector>(n)[bucketIndex[ind]]=totalName.c_str();
+    bucketIndex[ind]++;
+  }
+}
+
+//' Provides explanation, how given data frame will be hashed.
 //'
-//' @param df data frame to be hashed
-//' @param numCols integer, number of columns for the output data frame
-//' @param hashSeed integer, seed for the employed hash function (MurmurHash3)
+//' Creates a data structure describing the hashing process.
+//'
+//' @param df Data frame to be hashed.
+//' @param numCols Integer, number of columns for the output data frame.
+//' @param hashSeed Integer, seed for the employed hash function (MurmurHash3).
+//'
+//' @return List of integer vectors. Each entry in list corresponds to one column
+//' in the output of hashing. Entries in integer vectors give signs and names of integer
+//' vector entries provide names of columns in original data frame.
+//'
 //' @export
 // [[Rcpp::export]]
 
@@ -235,7 +263,7 @@ List explainHashDataFrame(DataFrame df, int numCols, int hashSeed) {
     else if (TYPEOF(df[inpColName])==INTSXP) {
       IntegerVector x=df[inpColName];
       if (isFactor(x)) {
-        updateCountsForFactorVector(*inpColNameIter,numCols,hashSeed,x,bucketCount);
+        updateExplanationForFactorVector(*inpColNameIter,numCols,hashSeed,x,resList,bucketIndex);
       } else {
         updateExplanationForIntegerOrNumericVector(*inpColNameIter,numCols,hashSeed,resList,bucketIndex);
       }

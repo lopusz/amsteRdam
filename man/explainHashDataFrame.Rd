@@ -2,18 +2,23 @@
 % Please edit documentation in R/RcppExports.R
 \name{explainHashDataFrame}
 \alias{explainHashDataFrame}
-\title{Hashes the data frame \code{df}, so the output contains \code{numCols}}
+\title{Provides explanation, how given data frame will be hashed.}
 \usage{
 explainHashDataFrame(df, numCols, hashSeed)
 }
 \arguments{
-\item{df}{data frame to be hashed}
+\item{df}{Data frame to be hashed.}
 
-\item{numCols}{integer, number of columns for the output data frame}
+\item{numCols}{Integer, number of columns for the output data frame.}
 
-\item{hashSeed}{integer, seed for the employed hash function (MurmurHash3)}
+\item{hashSeed}{Integer, seed for the employed hash function (MurmurHash3).}
+}
+\value{
+List of integer vectors. Each entry in list corresponds to one column
+in the output of hashing. Entries in integer vectors give signs and names of integer
+vector entries provide names of columns in original data frame.
 }
 \description{
-Hashes the data frame \code{df}, so the output contains \code{numCols}
+Function creates a data structure describing the hashing process.
 }
 
