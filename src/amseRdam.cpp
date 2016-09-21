@@ -13,6 +13,8 @@ int calcHash(const char *s, int max , uint32_t seed)  {
     const void *p=(const void *)s;
     int hashingRes;
     MurmurHash3_x86_32(p,strlen(s),seed,&hashingRes);
+    // Below, there has to be +1 because sign transports the info about substraction
+    // or addition of hashed feature. This info is needed also for 0th column.
     int res=(abs(hashingRes) % max)+1;
     return hashingRes>0 ? res : -res;
 }
@@ -59,6 +61,33 @@ bool isFactor(const IntegerVector &x) {
 }
 
 void processFactorVector(const char *colName, int numCols, int hashSeed, const IntegerVector &x, List &resList) {
+
+  // Create levels to columns mapping
+  CharacterVector levels=as<CharacterVector>(x.attr("levels"));
+  // for(CharacterVector::iterator it=levels.begin(); it!=levels.end(); it++) {
+  //   Rcout << (*it) << endl;
+  // }
+  vector<int> levelToColumn(levels.length()+1);  // levels are numbered from 1
+  vector<double> levelToSign(levels.length()+1);  // levels are numbered from 1
+
+  for(int i=0; i<levels.length(); i++) {
+    string totalName=string(colName)+string(levels[i]);
+    int h=calcHash(totalName.c_str(), numCols, hashSeed);
+    int targetCol=abs(h);
+    int sign=h<0 ? -1.0 : 1.0;
+
+    levelToColumn[i+1]=targetCol;
+    levelToSign[i+1]=sign;
+  }
+
+  for(int i=0; i<x.length(); i++) {
+    int level=x[i];
+    if (isNotIntNA(level)) {
+      int targetCol=levelToColumn[level];
+      double sign=levelToSign[level];
+      as<NumericVector>(resList[targetCol-1])[i]+=sign;
+    }
+  }
 }
 
 //' Hashes the data frame \code{df}, so the output contains \code{numCols}
@@ -85,7 +114,7 @@ DataFrame hashDataFrame(DataFrame df, int numCols, int hashSeed) {
         colNames[i]=ss.str();
     }
 
-    // Loop over columns, add substract each column depending on hash
+    // Loop over columns, add/substract each source column to target column depending on hash
 
     CharacterVector cnames=df.attr("names");
     for(CharacterVector::iterator colNameIter=cnames.begin(); colNameIter!=cnames.end(); colNameIter++) {
