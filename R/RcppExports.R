@@ -11,3 +11,13 @@ hashDataFrame <- function(df, numCols, hashSeed) {
     .Call('amsteRdam_hashDataFrame', PACKAGE = 'amsteRdam', df, numCols, hashSeed)
 }
 
+#' Hashes the data frame \code{df}, so the output contains \code{numCols}
+#'
+#' @param df data frame to be hashed
+#' @param numCols integer, number of columns for the output data frame
+#' @param hashSeed integer, seed for the employed hash function (MurmurHash3)
+#' @export
+explainHashDataFrame <- function(df, numCols, hashSeed) {
+    .Call('amsteRdam_explainHashDataFrame', PACKAGE = 'amsteRdam', df, numCols, hashSeed)
+}
+

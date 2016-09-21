@@ -64,14 +64,12 @@ void processFactorVector(const char *colName, int numCols, int hashSeed, const I
 
   // Create levels to columns mapping
   CharacterVector levels=as<CharacterVector>(x.attr("levels"));
-  // for(CharacterVector::iterator it=levels.begin(); it!=levels.end(); it++) {
-  //   Rcout << (*it) << endl;
-  // }
+
   vector<int> levelToColumn(levels.length()+1);  // levels are numbered from 1
   vector<double> levelToSign(levels.length()+1);  // levels are numbered from 1
 
   for(int i=0; i<levels.length(); i++) {
-    string totalName=string(colName)+string(levels[i]);
+    string totalName=string(colName)+":"+string(levels[i]);
     int h=calcHash(totalName.c_str(), numCols, hashSeed);
     int targetCol=abs(h);
     int sign=h<0 ? -1.0 : 1.0;
@@ -79,6 +77,8 @@ void processFactorVector(const char *colName, int numCols, int hashSeed, const I
     levelToColumn[i+1]=targetCol;
     levelToSign[i+1]=sign;
   }
+
+  // Map each value to precalculated column
 
   for(int i=0; i<x.length(); i++) {
     int level=x[i];
@@ -116,19 +116,19 @@ DataFrame hashDataFrame(DataFrame df, int numCols, int hashSeed) {
 
     // Loop over columns, add/substract each source column to target column depending on hash
 
-    CharacterVector cnames=df.attr("names");
-    for(CharacterVector::iterator colNameIter=cnames.begin(); colNameIter!=cnames.end(); colNameIter++) {
-        string colName=as<string>(*colNameIter);
+    CharacterVector inpColNames=df.attr("names");
+    for(CharacterVector::iterator inpColNameIter=inpColNames.begin(); inpColNameIter!=inpColNames.end(); inpColNameIter++) {
+        string inpColName=as<string>(*inpColNameIter);
 
-        if (TYPEOF(df[colName])==REALSXP) {
-              processNumericVector(*colNameIter,numCols,hashSeed,df[colName],resList);
+        if (TYPEOF(df[inpColName])==REALSXP) {
+              processNumericVector(*inpColNameIter,numCols,hashSeed,df[inpColName],resList);
         }
-        else if (TYPEOF(df[colName])==INTSXP) {
-          IntegerVector x=df[colName];
+        else if (TYPEOF(df[inpColName])==INTSXP) {
+          IntegerVector x=df[inpColName];
           if (isFactor(x)) {
-            processFactorVector(*colNameIter,numCols,hashSeed,x,resList);
+            processFactorVector(*inpColNameIter,numCols,hashSeed,x,resList);
           } else {
-            processIntegerVector(*colNameIter,numCols,hashSeed,x,resList);
+            processIntegerVector(*inpColNameIter,numCols,hashSeed,x,resList);
           }
       }
     }
@@ -136,4 +136,125 @@ DataFrame hashDataFrame(DataFrame df, int numCols, int hashSeed) {
   DataFrame result(resList);
   result.attr("names") = colNames;
   return result;
+}
+
+void updateCountsForIntegerOrNumericVector
+  (const char *colName, int numCols, int hashSeed, vector<int> &bucketCount) {
+  int h=calcHash(colName, numCols, hashSeed);
+  int targetCol=abs(h);
+  bucketCount[targetCol-1]++;
+}
+
+void updateCountsForFactorVector
+  (const char *colName, int numCols, int hashSeed, const IntegerVector &x, vector<int> &bucketCount) {
+  CharacterVector levels=as<CharacterVector>(x.attr("levels"));
+
+  vector<int> levelToColumn(levels.length()+1);  // levels are numbered from 1
+
+  for(int i=0; i<levels.length(); i++) {
+    string totalName=string(colName)+":"+string(levels[i]);
+    int h=calcHash(totalName.c_str(), numCols, hashSeed);
+    int targetCol=abs(h);
+    bucketCount[targetCol-1]++;
+  }
+}
+
+void updateExplanationForIntegerOrNumericVector
+  (const char *colName, int numCols, int hashSeed, List &resList, vector<int> &bucketIndex) {
+  int h=calcHash(colName, numCols, hashSeed);
+  int targetCol=abs(h);
+  int sign=h<0 ? -1.0 : 1.0;
+  int ind=targetCol-1;
+  as<IntegerVector>(resList[ind])[bucketIndex[ind]]=sign;
+  CharacterVector n=as<IntegerVector>(resList[ind]).attr("names");
+  as<CharacterVector>(n)[bucketIndex[ind]]=colName;
+  bucketIndex[ind]++;
+}
+
+//' Hashes the data frame \code{df}, so the output contains \code{numCols}
+//'
+//' @param df data frame to be hashed
+//' @param numCols integer, number of columns for the output data frame
+//' @param hashSeed integer, seed for the employed hash function (MurmurHash3)
+//' @export
+// [[Rcpp::export]]
+
+List explainHashDataFrame(DataFrame df, int numCols, int hashSeed) {
+
+  // Prepare names for resulting list
+  CharacterVector colNames(numCols);
+
+  for(int i=0; i<numCols; i++) {
+    stringstream ss;
+    ss << "H" <<  (i+1);
+    colNames[i]=ss.str();
+  }
+
+  List resList(numCols);
+  resList.attr("names") = colNames;
+
+  // Calculate number of entries in each bucket
+  vector<int> bucketCount(numCols);
+  fill(bucketCount.begin(), bucketCount.end(), 0);
+
+  CharacterVector inpColNames=df.attr("names");
+  for(CharacterVector::iterator inpColNameIter=inpColNames.begin(); inpColNameIter!=inpColNames.end(); inpColNameIter++) {
+    string inpColName=as<string>(*inpColNameIter);
+
+    if (TYPEOF(df[inpColName])==REALSXP) {
+      updateCountsForIntegerOrNumericVector(*inpColNameIter,numCols,hashSeed,bucketCount);
+    }
+    else if (TYPEOF(df[inpColName])==INTSXP) {
+      IntegerVector x=df[inpColName];
+      if (isFactor(x)) {
+        updateCountsForFactorVector(*inpColNameIter,numCols,hashSeed,x,bucketCount);
+      } else {
+        updateCountsForIntegerOrNumericVector(*inpColNameIter,numCols,hashSeed,bucketCount);
+      }
+    }
+  }
+
+  // Prepare buckets
+
+  for(int i=0; i<numCols; i++) {
+    IntegerVector v(bucketCount[i]);
+    v.attr("names")=CharacterVector(bucketCount[i]);
+    resList[i]=v;
+  }
+
+  // Fill buckets
+  vector<int> bucketIndex(numCols);
+  fill(bucketIndex.begin(), bucketIndex.end(), 0);
+
+  for(CharacterVector::iterator inpColNameIter=inpColNames.begin(); inpColNameIter!=inpColNames.end(); inpColNameIter++) {
+    string inpColName=as<string>(*inpColNameIter);
+
+    if (TYPEOF(df[inpColName])==REALSXP) {
+      updateExplanationForIntegerOrNumericVector(*inpColNameIter,numCols,hashSeed,resList,bucketIndex);
+    }
+    else if (TYPEOF(df[inpColName])==INTSXP) {
+      IntegerVector x=df[inpColName];
+      if (isFactor(x)) {
+        updateCountsForFactorVector(*inpColNameIter,numCols,hashSeed,x,bucketCount);
+      } else {
+        updateExplanationForIntegerOrNumericVector(*inpColNameIter,numCols,hashSeed,resList,bucketIndex);
+      }
+    }
+  }
+  for(CharacterVector::iterator inpColNameIter=inpColNames.begin(); inpColNameIter!=inpColNames.end(); inpColNameIter++) {
+    string inpColName=as<string>(*inpColNameIter);
+
+    if (TYPEOF(df[inpColName])==REALSXP) {
+      updateCountsForIntegerOrNumericVector(*inpColNameIter,numCols,hashSeed,bucketCount);
+    }
+    else if (TYPEOF(df[inpColName])==INTSXP) {
+      IntegerVector x=df[inpColName];
+      if (isFactor(x)) {
+        updateCountsForFactorVector(*inpColNameIter,numCols,hashSeed,x,bucketCount);
+      } else {
+        updateCountsForIntegerOrNumericVector(*inpColNameIter,numCols,hashSeed,bucketCount);
+      }
+    }
+  }
+  return resList;
 }

@@ -18,3 +18,16 @@ BEGIN_RCPP
     return __result;
 END_RCPP
 }
+// explainHashDataFrame
+List explainHashDataFrame(DataFrame df, int numCols, int hashSeed);
+RcppExport SEXP amsteRdam_explainHashDataFrame(SEXP dfSEXP, SEXP numColsSEXP, SEXP hashSeedSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< DataFrame >::type df(dfSEXP);
+    Rcpp::traits::input_parameter< int >::type numCols(numColsSEXP);
+    Rcpp::traits::input_parameter< int >::type hashSeed(hashSeedSEXP);
+    __result = Rcpp::wrap(explainHashDataFrame(df, numCols, hashSeed));
+    return __result;
+END_RCPP
+}
