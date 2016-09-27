@@ -4,7 +4,7 @@
 \alias{hashDataFrame}
 \title{Hashes the data frame, so the output contains much smaller number of columns.}
 \usage{
-hashDataFrame(df, numCols, hashSeed)
+hashDataFrame(df, numCols, hashSeed, factorMode = "integer")
 }
 \arguments{
 \item{df}{Data frame to be hashed.}
@@ -12,6 +12,10 @@ hashDataFrame(df, numCols, hashSeed)
 \item{numCols}{Integer, number of columns for the output data frame.}
 
 \item{hashSeed}{Integer, seed for the employed hash function (MurmurHash3).}
+
+\item{factorMode, }{determines how factors will be hashed --- \code{"integer"},
+treats factors as normal integers, \code{"oneHot"} uses one hot encoding,
+\code{"skip"} skips all the factors in the input. Defaults to \code{"integer"}.}
 }
 \value{
 Data frame having \code{numCols} columns, containing combination of

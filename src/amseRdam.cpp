@@ -98,13 +98,16 @@ void processFactorVector(const char *colName, int numCols, int hashSeed, const I
 //' @param df Data frame to be hashed.
 //' @param numCols Integer, number of columns for the output data frame.
 //' @param hashSeed Integer, seed for the employed hash function (MurmurHash3).
+//' @param factorMode, determines how factors will be hashed --- \code{"integer"},
+//' treats factors as normal integers, \code{"oneHot"} uses one hot encoding,
+//' \code{"skip"} skips all the factors in the input. Defaults to \code{"integer"}.
 //'
 //' @return Data frame having \code{numCols} columns, containing combination of
 //' columns from \code{df} according to hashing function.
 //' @export
 // [[Rcpp::export]]
 
-DataFrame hashDataFrame(DataFrame df, int numCols, int hashSeed) {
+DataFrame hashDataFrame(DataFrame df, int numCols, int hashSeed, std::string factorMode="integer") {
     // Create empty numCols dataFrame and fill it with zeros
 
     int nrows=df.nrows();
@@ -131,9 +134,9 @@ DataFrame hashDataFrame(DataFrame df, int numCols, int hashSeed) {
         }
         else if (TYPEOF(df[inpColName])==INTSXP) {
           IntegerVector x=df[inpColName];
-          if (isFactor(x)) {
+          if (isFactor(x) && (factorMode=="oneHot")) {
             processFactorVector(*inpColNameIter,numCols,hashSeed,x,resList);
-          } else {
+          } else if (!isFactor(x) || (factorMode=="integer")) {
             processIntegerVector(*inpColNameIter,numCols,hashSeed,x,resList);
           }
       }
@@ -199,6 +202,9 @@ void updateExplanationForFactorVector
 //' @param df Data frame to be hashed.
 //' @param numCols Integer, number of columns for the output data frame.
 //' @param hashSeed Integer, seed for the employed hash function (MurmurHash3).
+//' @param factorMode, determines how factors will be hashed --- \code{"integer"},
+//' treats factors as normal integers, \code{"oneHot"} uses one hot encoding,
+//' \code{"skip"} skips all the factors in the input. Defaults to \code{"integer"}.
 //'
 //' @return List of integer vectors. Each entry in list corresponds to one column
 //' in the output of hashing. Entries in integer vectors give signs and names of integer
@@ -207,7 +213,7 @@ void updateExplanationForFactorVector
 //' @export
 // [[Rcpp::export]]
 
-List explainHashDataFrame(DataFrame df, int numCols, int hashSeed) {
+List explainHashDataFrame(DataFrame df, int numCols, int hashSeed, std::string factorMode="integer") {
 
   // Prepare names for resulting list
   CharacterVector colNames(numCols);
@@ -234,9 +240,9 @@ List explainHashDataFrame(DataFrame df, int numCols, int hashSeed) {
     }
     else if (TYPEOF(df[inpColName])==INTSXP) {
       IntegerVector x=df[inpColName];
-      if (isFactor(x)) {
+      if (isFactor(x) && (factorMode=="oneHot")) {
         updateCountsForFactorVector(*inpColNameIter,numCols,hashSeed,x,bucketCount);
-      } else {
+      } else if (!isFactor(x) || (factorMode=="integer")) {
         updateCountsForIntegerOrNumericVector(*inpColNameIter,numCols,hashSeed,bucketCount);
       }
     }
@@ -262,9 +268,9 @@ List explainHashDataFrame(DataFrame df, int numCols, int hashSeed) {
     }
     else if (TYPEOF(df[inpColName])==INTSXP) {
       IntegerVector x=df[inpColName];
-      if (isFactor(x)) {
+      if (isFactor(x) && (factorMode=="oneHot")) {
         updateExplanationForFactorVector(*inpColNameIter,numCols,hashSeed,x,resList,bucketIndex);
-      } else {
+      } else if (!isFactor(x) || (factorMode=="integer")) {
         updateExplanationForIntegerOrNumericVector(*inpColNameIter,numCols,hashSeed,resList,bucketIndex);
       }
     }
@@ -277,12 +283,13 @@ List explainHashDataFrame(DataFrame df, int numCols, int hashSeed) {
     }
     else if (TYPEOF(df[inpColName])==INTSXP) {
       IntegerVector x=df[inpColName];
-      if (isFactor(x)) {
+      if (isFactor(x) && (factorMode=="oneHot")) {
         updateCountsForFactorVector(*inpColNameIter,numCols,hashSeed,x,bucketCount);
-      } else {
+      } else if (!isFactor(x) || (factorMode=="integer")) {
         updateCountsForIntegerOrNumericVector(*inpColNameIter,numCols,hashSeed,bucketCount);
       }
     }
   }
   return resList;
 }
+

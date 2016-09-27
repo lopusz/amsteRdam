@@ -9,28 +9,34 @@
 #' @param df Data frame to be hashed.
 #' @param numCols Integer, number of columns for the output data frame.
 #' @param hashSeed Integer, seed for the employed hash function (MurmurHash3).
+#' @param factorMode, determines how factors will be hashed --- \code{"integer"},
+#' treats factors as normal integers, \code{"oneHot"} uses one hot encoding,
+#' \code{"skip"} skips all the factors in the input. Defaults to \code{"integer"}.
 #'
 #' @return Data frame having \code{numCols} columns, containing combination of
 #' columns from \code{df} according to hashing function.
 #' @export
-hashDataFrame <- function(df, numCols, hashSeed) {
-    .Call('amsteRdam_hashDataFrame', PACKAGE = 'amsteRdam', df, numCols, hashSeed)
+hashDataFrame <- function(df, numCols, hashSeed, factorMode = "integer") {
+    .Call('amsteRdam_hashDataFrame', PACKAGE = 'amsteRdam', df, numCols, hashSeed, factorMode)
 }
 
 #' Provides explanation, how given data frame will be hashed.
 #'
-#' Function creates a data structure describing the hashing process.
+#' Creates a data structure describing the hashing process.
 #'
 #' @param df Data frame to be hashed.
 #' @param numCols Integer, number of columns for the output data frame.
 #' @param hashSeed Integer, seed for the employed hash function (MurmurHash3).
+#' @param factorMode, determines how factors will be hashed --- \code{"integer"},
+#' treats factors as normal integers, \code{"oneHot"} uses one hot encoding,
+#' \code{"skip"} skips all the factors in the input. Defaults to \code{"integer"}.
 #'
 #' @return List of integer vectors. Each entry in list corresponds to one column
 #' in the output of hashing. Entries in integer vectors give signs and names of integer
 #' vector entries provide names of columns in original data frame.
 #'
 #' @export
-explainHashDataFrame <- function(df, numCols, hashSeed) {
-    .Call('amsteRdam_explainHashDataFrame', PACKAGE = 'amsteRdam', df, numCols, hashSeed)
+explainHashDataFrame <- function(df, numCols, hashSeed, factorMode = "integer") {
+    .Call('amsteRdam_explainHashDataFrame', PACKAGE = 'amsteRdam', df, numCols, hashSeed, factorMode)
 }
 

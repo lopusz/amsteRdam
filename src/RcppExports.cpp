@@ -6,28 +6,30 @@
 using namespace Rcpp;
 
 // hashDataFrame
-DataFrame hashDataFrame(DataFrame df, int numCols, int hashSeed);
-RcppExport SEXP amsteRdam_hashDataFrame(SEXP dfSEXP, SEXP numColsSEXP, SEXP hashSeedSEXP) {
+DataFrame hashDataFrame(DataFrame df, int numCols, int hashSeed, std::string factorMode);
+RcppExport SEXP amsteRdam_hashDataFrame(SEXP dfSEXP, SEXP numColsSEXP, SEXP hashSeedSEXP, SEXP factorModeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject __result;
     Rcpp::RNGScope __rngScope;
     Rcpp::traits::input_parameter< DataFrame >::type df(dfSEXP);
     Rcpp::traits::input_parameter< int >::type numCols(numColsSEXP);
     Rcpp::traits::input_parameter< int >::type hashSeed(hashSeedSEXP);
-    __result = Rcpp::wrap(hashDataFrame(df, numCols, hashSeed));
+    Rcpp::traits::input_parameter< std::string >::type factorMode(factorModeSEXP);
+    __result = Rcpp::wrap(hashDataFrame(df, numCols, hashSeed, factorMode));
     return __result;
 END_RCPP
 }
 // explainHashDataFrame
-List explainHashDataFrame(DataFrame df, int numCols, int hashSeed);
-RcppExport SEXP amsteRdam_explainHashDataFrame(SEXP dfSEXP, SEXP numColsSEXP, SEXP hashSeedSEXP) {
+List explainHashDataFrame(DataFrame df, int numCols, int hashSeed, std::string factorMode);
+RcppExport SEXP amsteRdam_explainHashDataFrame(SEXP dfSEXP, SEXP numColsSEXP, SEXP hashSeedSEXP, SEXP factorModeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject __result;
     Rcpp::RNGScope __rngScope;
     Rcpp::traits::input_parameter< DataFrame >::type df(dfSEXP);
     Rcpp::traits::input_parameter< int >::type numCols(numColsSEXP);
     Rcpp::traits::input_parameter< int >::type hashSeed(hashSeedSEXP);
-    __result = Rcpp::wrap(explainHashDataFrame(df, numCols, hashSeed));
+    Rcpp::traits::input_parameter< std::string >::type factorMode(factorModeSEXP);
+    __result = Rcpp::wrap(explainHashDataFrame(df, numCols, hashSeed, factorMode));
     return __result;
 END_RCPP
 }

@@ -4,7 +4,7 @@
 \alias{explainHashDataFrame}
 \title{Provides explanation, how given data frame will be hashed.}
 \usage{
-explainHashDataFrame(df, numCols, hashSeed)
+explainHashDataFrame(df, numCols, hashSeed, factorMode = "integer")
 }
 \arguments{
 \item{df}{Data frame to be hashed.}
@@ -12,6 +12,10 @@ explainHashDataFrame(df, numCols, hashSeed)
 \item{numCols}{Integer, number of columns for the output data frame.}
 
 \item{hashSeed}{Integer, seed for the employed hash function (MurmurHash3).}
+
+\item{factorMode, }{determines how factors will be hashed --- \code{"integer"},
+treats factors as normal integers, \code{"oneHot"} uses one hot encoding,
+\code{"skip"} skips all the factors in the input. Defaults to \code{"integer"}.}
 }
 \value{
 List of integer vectors. Each entry in list corresponds to one column
@@ -19,6 +23,6 @@ in the output of hashing. Entries in integer vectors give signs and names of int
 vector entries provide names of columns in original data frame.
 }
 \description{
-Function creates a data structure describing the hashing process.
+Creates a data structure describing the hashing process.
 }
 
