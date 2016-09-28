@@ -174,7 +174,7 @@ void updateExplanationForIntegerOrNumericVector
   int ind=targetCol-1;
   as<IntegerVector>(resList[ind])[bucketIndex[ind]]=sign;
   CharacterVector n=as<IntegerVector>(resList[ind]).attr("names");
-  as<CharacterVector>(n)[bucketIndex[ind]]=colName;
+  n[bucketIndex[ind]]=colName;
   bucketIndex[ind]++;
 }
 
@@ -190,7 +190,7 @@ void updateExplanationForFactorVector
     int ind=targetCol-1;
     as<IntegerVector>(resList[ind])[bucketIndex[ind]]=sign;
     CharacterVector n=as<IntegerVector>(resList[ind]).attr("names");
-    as<CharacterVector>(n)[bucketIndex[ind]]=totalName.c_str();
+    n[bucketIndex[ind]]=totalName;
     bucketIndex[ind]++;
   }
 }
@@ -290,6 +290,6 @@ List explainHashDataFrame(DataFrame df, int numCols, int hashSeed, std::string f
       }
     }
   }
-  return resList;
+  return clone(resList);
 }
 
