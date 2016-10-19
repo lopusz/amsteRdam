@@ -1,0 +1,29 @@
+* amsteRdam
+  Implements feature hashing from [[http://dx.doi.org/10.1145/1553374.1553516][K. Weinberger, A. Dasgupta, J. Langford, A. Smola, J. Attenberg, Feature hashing for large scale multitask learning, ICML 2009]]
+
+  As hashing function it uses MurmurHash3 by A. Appleby.
+
+** Installation
+
+   To install package type:
+   #+BEGIN_SRC R
+   devtools::install_github("lopusz/amsteRdam")
+   #+END_SRC
+
+** Usage
+
+   The package provides two functions:
+
+   + =hashDataFrame= - converts data frame to hashed version
+
+     For details type:
+     #+BEGIN_SRC R
+     ?hashDataFrame
+     #+END_SRC
+
+   + =explainHashDataFrame= - describes which predictors go to which hashing "buckets"
+
+     For details type:
+     #+BEGIN_SRC R
+     ?explainHashDataFrame
+     #+END_SRC
